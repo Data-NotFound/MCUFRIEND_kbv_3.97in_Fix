@@ -9,7 +9,7 @@ But for some weird reason 272x480 display with ILI9486/ILI9488 is really common 
 First solution from the store that I brought from is to just manually change the elements on the screen by adding/subtracting position to avoid going into the cropped area.  
 Obviously... It worked! but it's not practical and really annoying.  
 
-The reason of this issue is it is detected as a 320X480 display but in reality it's only 272x480  
+The reason of this issue is it is detected as a 320x480 display but in reality it's only 272x480  
 Identifying overflowed pixels is really simple  
 
 320-272 = 48 pixels were overflowed out of the display.  
