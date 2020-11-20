@@ -42,6 +42,17 @@ void setup()
 }
 ```
 
+# Installation
+1. Download a release (Source code zip)
+
+2. Remove your old MCUFRIEND_kbv library (Delete `MCUFRIEND_kbv` folder in `C:\Users\Username\Documents\Arduino\libraries`)
+
+3. Goto your Arduino IDE
+
+3. Sketch > Include Library > Add .zip Library and select the file you downloaded
+
+If error occurred, extract the zip you downloaded and copy the folder over to `C:\Users\Username\Documents\Arduino\libraries`
+
 # Original MCUFRIEND_kbv README 
 Library for Uno 2.4, 2.8, 3.5, 3.6, 3.95 inch mcufriend  Shields
 
