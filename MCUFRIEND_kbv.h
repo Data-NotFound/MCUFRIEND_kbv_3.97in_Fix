@@ -34,6 +34,7 @@ class MCUFRIEND_kbv : public Adafruit_GFX {
 	virtual void     fillScreen(uint16_t color)                                     { fillRect(0, 0, _width, _height, color); }
 	virtual void     setRotation(uint8_t r);
     virtual void     invertDisplay(bool i);
+	void fixDisplay(uint16_t ID  = 0x0000);
 
 	uint16_t readReg(uint16_t reg, int8_t index=0);
 	int16_t  readGRAM(int16_t x, int16_t y, uint16_t *block, int16_t w, int16_t h);

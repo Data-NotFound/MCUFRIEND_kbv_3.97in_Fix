@@ -22,6 +22,11 @@
 #define SUPPORT_9488_555          //costs +230 bytes, 0.03s / 0.19s
 #define SUPPORT_B509_7793         //R61509, ST7793 +244 bytes
 #define OFFSET_9327 32            //costs about 103 bytes, 0.08s
+#define OFFSET_9486_272x480 24    //Offset for 272x480 display that was wrongly reported as 320x480
+#define OFFSET_9488_272x480 24    //Offset for 272x480 display that was wrongly reported as 320x480
+
+bool SUPPORT_9486_272x480 = false;
+bool SUPPORT_9488_272x480 = false;
 
 #include "MCUFRIEND_kbv.h"
 #if defined(USE_SERIAL)
@@ -528,6 +533,20 @@ void MCUFRIEND_kbv::drawPixel(int16_t x, int16_t y, uint16_t color)
 
 void MCUFRIEND_kbv::setAddrWindow(int16_t x, int16_t y, int16_t x1, int16_t y1)
 {
+	if (SUPPORT_9486_272x480 && _lcd_ID == 0x9486) {
+        if (rotation & 1)
+            y += OFFSET_9486_272x480, y1 += OFFSET_9486_272x480;
+	    else
+            x += OFFSET_9486_272x480, x1 += OFFSET_9486_272x480;
+    }
+
+    if (SUPPORT_9488_272x480 && _lcd_ID == 0x9488) {
+        if (rotation & 1)
+            y += OFFSET_9488_272x480, y1 += OFFSET_9488_272x480;
+	    else
+            x += OFFSET_9488_272x480, x1 += OFFSET_9488_272x480;
+    }
+ 
 #if defined(OFFSET_9327)
 	if (_lcd_ID == 0x9327) {
 	    if (rotation == 2) y += OFFSET_9327, y1 += OFFSET_9327;
@@ -2795,6 +2814,9 @@ case 0x4532:    // thanks Leodino
         p16 = (int16_t *) & HEIGHT;
         *p16 = 480;
         p16 = (int16_t *) & WIDTH;
+        if(SUPPORT_9486_272x480)
+            *p16 = 320 - (OFFSET_9486_272x480 * 2);
+        else
         *p16 = 320;
         break;
     case 0x7796:
@@ -2831,6 +2853,9 @@ case 0x4532:    // thanks Leodino
         p16 = (int16_t *) & HEIGHT;
         *p16 = 480;
         p16 = (int16_t *) & WIDTH;
+        if(SUPPORT_9488_272x480)
+        *p16 = 320 - (OFFSET_9486_272x480 * 2);
+        else
         *p16 = 320;
         break;
     case 0xB505:                //R61505V
@@ -3025,4 +3050,16 @@ case 0x4532:    // thanks Leodino
 		}
 	}
 #endif
+}
+
+void MCUFRIEND_kbv::fixDisplay(uint16_t ID)
+{
+    if(ID == 0x9486)
+        SUPPORT_9486_272x480 = true;
+    else if(ID == 0x9488)
+        SUPPORT_9488_272x480 = true;
+    else {
+        SUPPORT_9486_272x480 = true;
+        SUPPORT_9488_272x480 = true;
+    }
 }
