@@ -1,5 +1,6 @@
 //#define SUPPORT_0139              //S6D0139 +280 bytes
 #define SUPPORT_0154              //S6D0154 +320 bytes
+//#define SUPPORT_05A1              //for S6D05A1
 //#define SUPPORT_1289              //SSD1289,SSD1297 (ID=0x9797) +626 bytes, 0.03s
 //#define SUPPORT_1580              //R61580 Untested
 #define SUPPORT_1963              //only works with 16BIT bus anyway
@@ -16,6 +17,8 @@
 //#define SUPPORT_8357D_GAMMA       //monster 34 byte 
 //#define SUPPORT_9163              //
 //#define SUPPORT_9225              //ILI9225-B, ILI9225-G ID=0x9225, ID=0x9226, ID=0x6813 +380 bytes
+#define SUPPORT_9320              //ID=0x0001, R61505, SPFD5408, ILI9320
+#define SUPPORT_9325              //RM68090, ILI9325, ILI9328, ILI9331, ILI9335 
 //#define SUPPORT_9326_5420         //ILI9326, SPFD5420 +246 bytes
 //#define SUPPORT_9342              //costs +114 bytes
 //#define SUPPORT_9806              //UNTESTED
@@ -32,7 +35,7 @@ bool SUPPORT_9488_272x480 = false;
 #if defined(USE_SERIAL)
 #include "utility/mcufriend_serial.h"
  //uint8_t running;
-#elif defined(__MBED__)
+#elif defined(__MBED__) && !defined(ARDUINO_ARCH_MBED)
 #include "utility/mcufriend_mbed.h"
 #elif defined(__CC_ARM) || defined(__CROSSWORKS_ARM)
 #include "utility/mcufriend_keil.h"
@@ -219,6 +222,8 @@ uint16_t MCUFRIEND_kbv::readID(void)
         return 0x1526;          //subsequent begin() enables Command Access
     if (ret == 0xFF00)          //R61520: [xx FF FF 00]
         return 0x1520;          //subsequent begin() enables Command Access
+    if (ret == 0xF000)          //S6D05A1: [xx F0 F0 00] 
+        return 0x05A1;          //subsequent begin() enables Command Access
 //#endif
 	ret = readReg40(0xBF);
 	if (ret == 0x8357)          //HX8357B: [xx 01 62 83 57 FF]
@@ -247,7 +252,8 @@ uint16_t MCUFRIEND_kbv::readID(void)
     uint32_t ret32 = readReg32(0x04);
     msb = ret32 >> 16;
     ret = ret32;	
-//    if (msb = 0x38 && ret == 0x8000) //unknown [xx 38 80 00] with D3 = 0x1602
+    if (msb == 0xE3 && ret == 0x0000) return 0xE300; //reg(04) = [xx E3 00 00] BangGood
+//    if (msb == 0x38 && ret == 0x8000) //unknown [xx 38 80 00] with D3 = 0x1602
     if (msb == 0x00 && ret == 0x8000) { //HX8357-D [xx 00 80 00]
 #if 1
         uint8_t cmds[] = {0xFF, 0x83, 0x57};
@@ -1046,6 +1052,37 @@ void MCUFRIEND_kbv::begin(uint16_t ID)
         };
         init_table16(S6D0154_regValues, sizeof(S6D0154_regValues));
 
+        break;
+#endif
+
+#ifdef SUPPORT_05A1
+    case 0x05A1:
+        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS;
+        static const uint8_t S6D05A1_regValues_max[] PROGMEM = {
+            0xF0, 2, 0x5A, 0x5A,
+            0xF1, 2, 0x5A, 0x5A,
+            0xF2, 19, 0x3B, 0x33, 0x03, 0x0C, 0x08, 0x08, 0x08, 0x00, 0x08, 0x08, 0x00, 0x00, 0x00, 0x00, 0x33, 0x0C, 0x08, 0x0C, 0x08,
+            0xF4, 14, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x70, 0x03, 0x04, 0x70, 0x03,
+            0xF5, 12, 0x00, 0x46, 0x70, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x46, 0x70,
+            0xF6, 8, 0x03, 0x00, 0x08, 0x03, 0x03, 0x00, 0x03, 0x00,
+            0xF7, 5, 0x00, 0x80, 0x10, 0x02, 0x00,
+            0xF8, 2, 0x11, 0x00,
+            0xF9, 1, 0x14,
+            0xFA, 16, 0x33, 0x07, 0x04, 0x1A, 0x18, 0x1C, 0x24, 0x1D, 0x26, 0x28, 0x2F, 0x2E, 0x00, 0x00, 0x00, 0x00,
+            0xFB, 16, 0x33, 0x03, 0x00, 0x2E, 0x2F, 0x28, 0x26, 0x1D, 0x24, 0x1C, 0x18, 0x1A, 0x04, 0x00, 0x00, 0x00,
+            0xF9, 1, 0x12,
+            0xFA, 16, 0x36, 0x07, 0x04, 0x1C, 0x1C, 0x23, 0x28, 0x1C, 0x25, 0x26, 0x2E, 0x2B, 0x00, 0x00, 0x00, 0x00,
+            0xFB, 16, 0x33, 0x06, 0x00, 0x2B, 0x2E, 0x26, 0x25, 0x1C, 0x28, 0x23, 0x1C, 0x1C, 0x04, 0x00, 0x00, 0x00,
+            0xF9, 1, 0x11,
+            0xFA, 16, 0x33, 0x07, 0x04, 0x30, 0x32, 0x34, 0x35, 0x11, 0x1D, 0x20, 0x28, 0x20, 0x00, 0x00, 0x00, 0x00,
+            0xFB, 16, 0x33, 0x03, 0x00, 0x20, 0x28, 0x20, 0x1D, 0x11, 0x35, 0x34, 0x32, 0x30, 0x04, 0x00, 0x00, 0x00,
+            0x44, 2, 0x00, 0x01,
+        };
+        table8_ads = S6D05A1_regValues_max, table_size = sizeof(S6D05A1_regValues_max);
+        p16 = (int16_t *) & HEIGHT;
+        *p16 = 480;
+        p16 = (int16_t *) & WIDTH;
+        *p16 = 320;
         break;
 #endif
 
@@ -2310,6 +2347,7 @@ case 0x4532:    // thanks Leodino
         break;
 #endif
 
+#ifdef SUPPORT_9320
     case 0x0001:
         _lcd_capable = 0 | REV_SCREEN | INVERT_GS; //no RGB bug. thanks Ivo_Deshev
         goto common_9320;
@@ -2385,6 +2423,9 @@ case 0x4532:    // thanks Leodino
         };
         init_table16(ILI9320_regValues, sizeof(ILI9320_regValues));
         break;
+#endif
+
+#ifdef SUPPORT_9325
     case 0x6809:
         _lcd_capable = 0 | REV_SCREEN | INVERT_GS | AUTO_READINC;
         goto common_93x5;
@@ -2458,6 +2499,7 @@ case 0x4532:    // thanks Leodino
         };
         init_table16(ILI9325_regValues, sizeof(ILI9325_regValues));
         break;
+#endif
 
 #if defined(SUPPORT_9326_5420)
 	case 0x5420:
@@ -2558,6 +2600,9 @@ case 0x4532:    // thanks Leodino
         table8_ads = XX1602_regValues, table_size = sizeof(XX1602_regValues);
         break;
 
+    case 0xE300:    //weird from BangGood
+        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS | INVERT_SS | INVERT_RGB;
+        goto common_9329;
     case 0x2053:    //weird from BangGood
         _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_24BITS | REV_SCREEN | READ_BGR;
 		goto common_9329;
